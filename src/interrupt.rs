@@ -8,7 +8,9 @@ use register::mstatus;
 #[inline]
 pub unsafe fn disable() {
     match () {
-        #[cfg(riscv)]
+        #[cfg(all(riscv, feature = "user-mode"))]
+        () => {},
+        #[cfg(all(riscv, not(feature = "user-mode")))]
         () => mstatus::clear_mie(),
         #[cfg(not(riscv))]
         () => unimplemented!(),
@@ -23,7 +25,9 @@ pub unsafe fn disable() {
 #[inline]
 pub unsafe fn enable() {
     match () {
-        #[cfg(riscv)]
+        #[cfg(all(riscv, feature = "user-mode"))]
+        () => {},
+        #[cfg(all(riscv, not(feature = "user-mode")))]
         () => mstatus::set_mie(),
         #[cfg(not(riscv))]
         () => unimplemented!(),
@@ -37,6 +41,7 @@ pub fn free<F, R>(f: F) -> R
 where
     F: FnOnce(&CriticalSection) -> R,
 {
+    #[cfg(not(feature = "user-mode"))]
     let mstatus = mstatus::read();
 
     // disable interrupts
@@ -48,6 +53,7 @@ where
 
     // If the interrupts were active before our `disable` call, then re-enable
     // them. Otherwise, keep them disabled
+    #[cfg(not(feature = "user-mode"))]
     if mstatus.mie() {
         unsafe {
             enable();

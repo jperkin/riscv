@@ -25,3 +25,4 @@ riscv-target = "0.1.2"
 
 [features]
 inline-asm = []
+user-mode = []
